@@ -1,0 +1,12 @@
+function calculate() {
+    const amount = document.getElementById('cryptoAmount').value;
+    const resultElement = document.getElementById('result');
+
+    if (amount) {
+        // Aquí puedes añadir el cálculo que quieras realizar
+        const result = amount * 2; // Este es un ejemplo sencillo
+        resultElement.innerText = `El resultado es: ${result}`;
+    } else {
+        resultElement.innerText = 'Por favor, ingresa una cantidad válida.';
+    }
+}
