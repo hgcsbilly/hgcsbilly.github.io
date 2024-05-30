@@ -62,7 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 chart = new Chart(chartCtx, {
-                    type: 'candle',
+                    type: 'candlestick',
                     data: {
                         labels: data.map((_, index) => index + 1),
                         datasets: [{
