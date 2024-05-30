@@ -32,15 +32,18 @@ document.addEventListener('DOMContentLoaded', () => {
         return rsi;
     };
 
-    const fetchCoins = () => {
-        fetch('https://api.binance.com/api/v3/ticker/price')
+    const fetchFuturesCoins = () => {
+        fetch('https://fapi.binance.com/fapi/v1/ticker/price')
             .then(response => response.json())
             .then(data => {
-                const usdtCoins = data.filter(coin => coin.symbol.endsWith('USDT'));
-                usdtCoins.forEach(coin => {
+                const usdtFuturesCoins = data.filter(coin => coin.symbol.endsWith('USDT'));
+                usdtFuturesCoins.forEach(coin => {
+                    const rsi = calculateRSI(getRandomPrices()); // Obtener un valor aleatorio para RSI (para fines de demostración)
+
                     const listItem = document.createElement('li');
-                    listItem.textContent = `${coin.symbol}: ${coin.price}`;
+                    listItem.textContent = `${coin.symbol}: Precio: ${coin.price}, RSI: ${rsi.toFixed(2)}`;
                     listItem.dataset.symbol = coin.symbol;
+                    listItem.classList.add(rsi >= 50 ? 'overbought' : 'oversold'); // Clasificar las monedas
                     listItem.addEventListener('click', () => fetchChartData(coin.symbol));
                     coinsList.appendChild(listItem);
                 });
@@ -48,7 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const fetchChartData = (symbol) => {
-        fetch(`https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=1d&limit=100`)
+        fetch(`https://fapi.binance.com/fapi/v1/klines?symbol=${symbol}&interval=1d&limit=100`)
             .then(response => response.json())
             .then(data => {
                 const prices = data.map(entry => parseFloat(entry[4]));
@@ -92,5 +95,14 @@ document.addEventListener('DOMContentLoaded', () => {
             });
     };
 
-    fetchCoins();
+    fetchFuturesCoins();
 });
+
+// Función para obtener precios aleatorios (para fines de demostración)
+const getRandomPrices = () => {
+    const prices = [];
+    for (let i = 0; i < 100; i++) {
+        prices.push(Math.random() * 1000);
+    }
+    return prices;
+};
