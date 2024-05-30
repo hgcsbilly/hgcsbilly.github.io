@@ -38,60 +38,43 @@ document.addEventListener('DOMContentLoaded', () => {
             .then(data => {
                 const usdtFuturesCoins = data.filter(coin => coin.symbol.endsWith('USDT'));
                 usdtFuturesCoins.forEach(coin => {
-                    const rsi = calculateRSI(getRandomPrices()); // Obtener un valor aleatorio para RSI (para fines de demostración)
-
                     const listItem = document.createElement('li');
-                    listItem.textContent = `${coin.symbol}: Precio: ${coin.price}, RSI: ${rsi.toFixed(2)}`;
+                    listItem.textContent = `${coin.symbol}: Precio: ${coin.price}`;
                     listItem.dataset.symbol = coin.symbol;
-                    listItem.classList.add(rsi >= 50 ? 'overbought' : 'oversold'); // Clasificar las monedas
-                    listItem.addEventListener('click', () => fetchChartData(coin.symbol));
                     coinsList.appendChild(listItem);
                 });
+                setInterval(updatePrices, 60000); // Actualizar precios cada minuto
             });
     };
 
-    const fetchChartData = (symbol) => {
-        fetch(`https://fapi.binance.com/fapi/v1/klines?symbol=${symbol}&interval=1d&limit=100`)
+    const updatePrices = () => {
+        fetch('https://fapi.binance.com/fapi/v1/ticker/price')
             .then(response => response.json())
             .then(data => {
-                const prices = data.map(entry => parseFloat(entry[4]));
-                const rsi = calculateRSI(prices);
+                const usdtFuturesCoins = data.filter(coin => coin.symbol.endsWith('USDT'));
+                const coinsContainer = document.getElementById('coins-list');
+                coinsContainer.innerHTML = ''; // Limpiar la lista antes de actualizar
 
-                if (chart) {
-                    chart.destroy();
-                }
+                const overboughtContainer = document.createElement('div');
+                overboughtContainer.classList.add('overbought-container');
 
-                chart = new Chart(chartCtx, {
-                    type: 'line',
-                    data: {
-                        labels: data.map((_, index) => index + 1),
-                        datasets: [{
-                            label: `${symbol} Price`,
-                            data: prices,
-                            borderColor: 'rgba(75, 192, 192, 1)',
-                            borderWidth: 1,
-                            fill: false
-                        }]
-                    },
-                    options: {
-                        scales: {
-                            x: {
-                                display: true,
-                                title: {
-                                    display: true,
-                                    text: 'Días'
-                                }
-                            },
-                            y: {
-                                display: true,
-                                title: {
-                                    display: true,
-                                    text: 'Precio'
-                                }
-                            }
-                        }
+                const oversoldContainer = document.createElement('div');
+                oversoldContainer.classList.add('oversold-container');
+
+                usdtFuturesCoins.forEach(coin => {
+                    const rsi = calculateRSI(getRandomPrices()); // Obtener un valor aleatorio para RSI (para fines de demostración)
+                    const listItem = document.createElement('li');
+                    listItem.textContent = `${coin.symbol}: Precio: ${coin.price}, RSI: ${rsi.toFixed(2)}`;
+                    listItem.dataset.symbol = coin.symbol;
+                    if (rsi >= 50) {
+                        overboughtContainer.appendChild(listItem);
+                    } else {
+                        oversoldContainer.appendChild(listItem);
                     }
                 });
+
+                coinsContainer.appendChild(overboughtContainer);
+                coinsContainer.appendChild(oversoldContainer);
             });
     };
 

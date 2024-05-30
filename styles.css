@@ -101,3 +101,26 @@ body {
 .oversold {
     color: #44ff44; /* Color para monedas sobrevendidas */
 }
+
+/* Estilos adicionales */
+.coins-container {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+}
+
+.overbought-container,
+.oversold-container {
+    flex: 1;
+    padding: 0 10px;
+}
+
+.overbought-container {
+    border-right: 1px solid #ddd; /* Separador entre las columnas */
+}
+
+.overbought-container h2,
+.oversold-container h2 {
+    text-align: center;
+    margin-bottom: 10px;
+}
