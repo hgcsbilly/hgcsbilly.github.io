@@ -1,12 +1,73 @@
-function calculate() {
-    const amount = document.getElementById('cryptoAmount').value;
-    const resultElement = document.getElementById('result');
+/* Estilos generales */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
 
-    if (amount) {
-        // Aquí puedes añadir el cálculo que quieras realizar
-        const result = amount * 2; // Este es un ejemplo sencillo
-        resultElement.innerText = `El resultado es: ${result}`;
-    } else {
-        resultElement.innerText = 'Por favor, ingresa una cantidad válida.';
+/* Estilos del menú de navegación */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #333;
+    padding: 10px 20px;
+}
+
+.navbar .logo {
+    color: #fff;
+    font-size: 24px;
+    text-transform: uppercase;
+}
+
+.nav-links {
+    list-style: none;
+    display: flex;
+    margin: 0;
+    padding: 0;
+}
+
+.nav-links li {
+    margin-left: 20px;
+}
+
+.nav-links a {
+    color: #fff;
+    text-decoration: none;
+    font-size: 18px;
+}
+
+.hamburger {
+    display: none;
+    flex-direction: column;
+    cursor: pointer;
+}
+
+.hamburger span {
+    width: 25px;
+    height: 3px;
+    background: #fff;
+    margin: 4px 0;
+}
+
+/* Estilos responsivos */
+@media (max-width: 768px) {
+    .nav-links {
+        display: none;
+        flex-direction: column;
+        width: 100%;
+        background: #333;
     }
+    .nav-links li {
+        text-align: center;
+        margin: 10px 0;
+    }
+    .hamburger {
+        display: flex;
+    }
+}
+
+.nav-links.active {
+    display: flex;
 }
