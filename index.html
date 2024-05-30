@@ -1,31 +1,48 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Página Principal</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>Criptomonedas</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-    <header>
-        <nav class="navbar">
-            <div class="logo">MiPágina</div>
-            <ul class="nav-links">
-                <li><a href="index.html">Home</a></li>
-                <li><a href="bot.html">Bot</a></li>
-                <li><a href="alquimia.html">Alquimia</a></li>
-            </ul>
-            <div class="hamburger">
-                <span></span>
-                <span></span>
-                <span></span>
-            </div>
-        </nav>
-    </header>
-    <main>
-        <h1>Bienvenido a Mi Página Principal</h1>
-        <p>Esta es la página principal de mi sitio web.</p>
-    </main>
+    <h1>Tablas de Criptomonedas</h1>
+    <div id="tables">
+        <div id="overbought">
+            <h2>Sobrecompra</h2>
+            <table id="overboughtTable">
+                <thead>
+                    <tr>
+                        <th>Moneda</th>
+                        <th>Precio</th>
+                        <th>RSI</th>
+                        <th>SMA</th>
+                        <th>Alerta Cruce</th>
+                        <th>Gráfico</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+        <div id="oversold">
+            <h2>Sobreventa</h2>
+            <table id="oversoldTable">
+                <thead>
+                    <tr>
+                        <th>Moneda</th>
+                        <th>Precio</th>
+                        <th>RSI</th>
+                        <th>SMA</th>
+                        <th>Alerta Cruce</th>
+                        <th>Gráfico</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
     <script src="script.js"></script>
 </body>
 </html>

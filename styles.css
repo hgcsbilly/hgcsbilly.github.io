@@ -1,126 +1,33 @@
-/* Estilos generales */
 body {
     font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    background-color: #121212;
-    color: #ffffff;
+    text-align: center;
 }
 
-/* Estilos del menú de navegación */
-.navbar {
+#tables {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background-color: #333;
-    padding: 10px 20px;
-}
-
-.navbar .logo {
-    color: #fff;
-    font-size: 24px;
-    text-transform: uppercase;
-}
-
-.nav-links {
-    list-style: none;
-    display: flex;
-    margin: 0;
-    padding: 0;
-}
-
-.nav-links li {
-    margin-left: 20px;
-}
-
-.nav-links a {
-    color: #fff;
-    text-decoration: none;
-    font-size: 18px;
-}
-
-.hamburger {
-    display: none;
-    flex-direction: column;
-    cursor: pointer;
-}
-
-.hamburger span {
-    width: 25px;
-    height: 3px;
-    background: #fff;
-    margin: 4px 0;
-}
-
-/* Estilos responsivos */
-@media (max-width: 768px) {
-    .nav-links {
-        display: none;
-        flex-direction: column;
-        width: 100%;
-        background: #333;
-    }
-    .nav-links li {
-        text-align: center;
-        margin: 10px 0;
-    }
-    .hamburger {
-        display: flex;
-    }
-}
-
-.nav-links.active {
-    display: flex;
-}
-
-/* Estilos adicionales */
-.container {
-    display: flex;
-}
-
-.coins-container {
-    flex: 1;
-    padding: 20px;
-}
-
-.chart-container {
-    flex: 1;
-    padding: 20px;
-}
-
-#chart {
-    max-width: 100%;
-    height: auto;
-}
-
-.overbought {
-    color: #ff4444; /* Color para monedas sobrecompradas */
-}
-
-.oversold {
-    color: #44ff44; /* Color para monedas sobrevendidas */
-}
-
-/* Estilos adicionales */
-.coins-container {
-    display: flex;
-    justify-content: space-between;
+    justify-content: space-around;
     margin-top: 20px;
 }
 
-.overbought-container,
-.oversold-container {
-    flex: 1;
-    padding: 0 10px;
+table {
+    width: 45%;
+    border-collapse: collapse;
 }
 
-.overbought-container {
-    border-right: 1px solid #ddd; /* Separador entre las columnas */
+th, td {
+    border: 1px solid #ddd;
+    padding: 8px;
 }
 
-.overbought-container h2,
-.oversold-container h2 {
-    text-align: center;
-    margin-bottom: 10px;
+th {
+    background-color: #f2f2f2;
+}
+
+h1, h2 {
+    color: #333;
+}
+
+.chart-container {
+    width: 300px;
+    height: 150px;
 }
