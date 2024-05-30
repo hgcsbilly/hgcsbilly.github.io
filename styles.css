@@ -4,6 +4,8 @@ body {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    background-color: #121212;
+    color: #ffffff;
 }
 
 /* Estilos del menú de navegación */
