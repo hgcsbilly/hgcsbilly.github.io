@@ -73,3 +73,31 @@ body {
 .nav-links.active {
     display: flex;
 }
+
+/* Estilos adicionales */
+.container {
+    display: flex;
+}
+
+.coins-container {
+    flex: 1;
+    padding: 20px;
+}
+
+.chart-container {
+    flex: 1;
+    padding: 20px;
+}
+
+#chart {
+    max-width: 100%;
+    height: auto;
+}
+
+.overbought {
+    color: #ff4444; /* Color para monedas sobrecompradas */
+}
+
+.oversold {
+    color: #44ff44; /* Color para monedas sobrevendidas */
+}
