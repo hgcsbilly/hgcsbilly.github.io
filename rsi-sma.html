@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RSI-SMA</title>
     <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="script.js" defer></script>
 </head>
 <body>
     <header>
@@ -19,6 +19,11 @@
     </header>
     <main>
         <h1>Tablas de Criptomonedas</h1>
+        <div>
+            <label for="pair-input">Añadir Par:</label>
+            <input type="text" id="pair-input" placeholder="Ej: BTCUSDT">
+            <button onclick="addPair()">Añadir</button>
+        </div>
         <div id="tables">
             <div id="overbought">
                 <h2>Sobrecompra</h2>
@@ -30,7 +35,7 @@
                             <th>RSI</th>
                             <th>SMA</th>
                             <th>Alerta Cruce</th>
-                            <th>Gráfico</th>
+                            <th>Último Cruce</th>
                         </tr>
                     </thead>
                     <tbody></tbody>
@@ -46,7 +51,7 @@
                             <th>RSI</th>
                             <th>SMA</th>
                             <th>Alerta Cruce</th>
-                            <th>Gráfico</th>
+                            <th>Último Cruce</th>
                         </tr>
                     </thead>
                     <tbody></tbody>
@@ -54,6 +59,5 @@
             </div>
         </div>
     </main>
-    <script src="script.js"></script>
 </body>
 </html>
