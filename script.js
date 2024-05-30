@@ -41,6 +41,26 @@ const calculateRSI = (prices, period) => {
     return rsi;
 };
 
+const calculateSMMA = (values, period) => {
+    let smma = [];
+    let smaSum = 0;
+
+    // Calcular el primer valor de SMMA como SMA
+    for (let i = 0; i < period; i++) {
+        smaSum += values[i].value;
+    }
+    smma.push({ value: smaSum / period, time: values[period - 1].time });
+
+    // Calcular los siguientes valores de SMMA
+    for (let i = period; i < values.length; i++) {
+        const previousSMMA = smma[smma.length - 1].value;
+        const currentSMMA = ((previousSMMA * (period - 1)) + values[i].value) / period;
+        smma.push({ value: currentSMMA, time: values[i].time });
+    }
+
+    return smma;
+};
+
 const addPair = () => {
     const pairInput = document.getElementById('pair-input');
     const newPair = pairInput.value.toUpperCase();
@@ -60,25 +80,24 @@ const updateTables = async () => {
 
     for (const symbol of symbols) {
         const prices = await fetchData(symbol);
-        const sma = calculateSMA(prices, 14);
         const rsi = calculateRSI(prices, 14);
-        const latestSMA = sma.slice(-1)[0];
+        const smoothedRSI = calculateSMMA(rsi, 14);
         const latestRSI = rsi.slice(-1)[0];
+        const latestSmoothedRSI = smoothedRSI.slice(-1)[0];
         const price = prices.slice(-1)[0].close;
+        const lastCross = new Date(latestRSI.time).toLocaleString();
 
         const row = document.createElement("tr");
-        const lastCross = new Date(latestSMA.time).toLocaleString();
-
         row.innerHTML = `
             <td>${symbol}</td>
             <td>${price.toFixed(2)}</td>
             <td>${latestRSI.value.toFixed(2)}</td>
-            <td>${latestSMA.value.toFixed(2)}</td>
-            <td>${(latestRSI.value > latestSMA.value ? 'Sí' : 'No')}</td>
+            <td>${latestSmoothedRSI.value.toFixed(2)}</td>
+            <td>${(latestRSI.value > latestSmoothedRSI.value ? 'Sí' : 'No')}</td>
             <td>${lastCross}</td>
         `;
 
-        if (latestRSI.value > latestSMA.value) {
+        if (latestRSI.value > latestSmoothedRSI.value) {
             overboughtTable.appendChild(row);
         } else {
             oversoldTable.appendChild(row);
