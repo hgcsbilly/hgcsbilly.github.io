@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alertas de Movimiento</title>
+</head>
+<body>
+    <h1>Alertas de Movimiento</h1>
+    <div id="results"></div>
+</body>
+</html>
+
+<script>
+    // Aquí puedes colocar el código JavaScript que ejecuta el script y muestra los resultados en la página
+    // Puedes utilizar el DOM para actualizar el contenido del contenedor de resultados
+    const binance = require('node-binance-api');
+const variacion = 5; // Variacion en los ultimos 30 minutos en porcentaje
+const variacion_100 = 7; // Variacion en los ultimos 30 minutos en porcentaje si tiene menos de 100k de volumen
+const variacionfast = 2; // Variacion en los ultimos 2 minutos en porcentaje
+
+binance.options({
+  APIKEY: 'your_api_key',
+  APISECRET: 'your_api_secret',
+  useServerTime: true
+});
+
+const buscarticks = async () => {
+  const lista_ticks = await binance.futuresPrices();
+  console.log('Numero de monedas encontradas #' + lista_ticks.length);
+  const ticks = lista_ticks.filter(tick => tick.symbol.slice(-4) !== 'USDT').map(tick => tick.symbol);
+  console.log('Numero de monedas encontradas en el par USDT: #' + ticks.length);
+  return ticks;
+}
+
+const getKlines = async (tick) => {
+  const klines = await binance.futuresCandles({ symbol: tick, interval: '1m', limit: 30 });
+  return klines;
+}
+
+const infoTicks = async (tick) => {
+  const info = await binance.futuresPrices({ symbol: tick });
+  return info;
+}
+
+const humanFormat = (volumen) => {
+  let magnitude = 0;
+  while (Math.abs(volumen) >= 1000) {
+    magnitude++;
+    volumen /= 1000.0;
+  }
+  return `${volumen.toFixed(2)}${['', 'K', 'M', 'G', 'T', 'P'][magnitude]}`;
+}
+
+const porcentajeKlines = async (tick, klines, knumber) => {
+  const inicial = parseFloat(klines[0][4]);
+  const final = parseFloat(klines[knumber][4]);
+
+  if (inicial > final) {
+    const result = (((inicial - final) / inicial) * 100).toFixed(2);
+    if (result >= variacion) {
+      const info = await infoTicks(tick);
+      const volumen = parseFloat(info.quoteVolume);
+      if (volumen > 100000000 || result >= variacion_100) {
+        console.log('LONG: ' + tick);
+        console.log('Variacion: ' + result + '%');
+        console.log('Volumen: ' + humanFormat(volumen));
+        console.log('Precio max: ' + info.highPrice);
+        console.log('Precio min: ' + info.lowPrice);
+        console.log('');
+      }
+    }
+
+    if (final > inicial) {
+      const result = (((final - inicial) / inicial) * 100).toFixed(2);
+      if (result >= variacion) {
+        const info = await infoTicks(tick);
+        const volumen = parseFloat(info.quoteVolume);
+        if (volumen > 100000000 || result >= variacion_100) {
+          console.log('SHORT: ' + tick);
+          console.log('Variacion: ' + result + '%');
+          console.log('Volumen: ' + humanFormat(volumen));
+          console.log('Precio max: ' + info.highPrice);
+          console.log('Precio min: ' + info.lowPrice);
+          console.log('');
+        }
+      }
+
+      if (knumber >= 3) {
+        const inicial = parseFloat(klines[knumber - 2][4]);
+        const final = parseFloat(klines[knumber][4]);
+        if (inicial < final) {
+          const result = (((final - inicial) / inicial) * 100).toFixed(2);
+          if (result >= variacionfast) {
+            const info = await infoTicks(tick);
+            const volumen = parseFloat(info.quoteVolume);
+            console.log('FAST SHORT!: ' + tick);
+            console.log('Variacion: ' + result + '%');
+            console.log('Volumen: ' + humanFormat(volumen));
+            console.log('Precio max: ' + info.highPrice);
+            console.log('Precio min: ' + info.lowPrice);
+            console.log('');
+          }
+        }
+      }
+    }
+  }
+}
+
+const main = async () => {
+  while (true) {
+    const ticks = await buscarticks();
+    console.log('Escaneando monedas...');
+    console.log('');
+
+    for (const tick of ticks) {
+      const klines = await getKlines(tick);
+      let knumber = klines.length;
+      
+      if (knumber > 0) {
+        knumber--;
+        await porcentajeKlines(tick, klines, knumber);
+      }
+    }
+
+    console.log('Esperando 30 segundos...');
+    console.log('');
+    await new Promise(resolve => setTimeout(resolve, 30000));
+  }
+}
+
+main();
+    // Ejemplo de cómo mostrar un mensaje en el contenedor de resultados
+    const resultsContainer = document.getElementById('results');
+    resultsContainer.innerHTML = '¡Alertas de movimiento detectadas!';
+</script>
