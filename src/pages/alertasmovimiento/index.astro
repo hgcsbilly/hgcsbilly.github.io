@@ -1,5 +1,4 @@
 ---
-import AlertasMovimientos from '../../components/AlertasMovimientos.astro';
 ---
 
 <!DOCTYPE html>
@@ -7,10 +6,12 @@ import AlertasMovimientos from '../../components/AlertasMovimientos.astro';
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi Página de Astro</title>
+    <title>Alertas de Movimientos</title>
+    <script src="/js/alertas.js" defer></script>
   </head>
   <body>
-    <h1>Alertas movimiento</h1>
-    <AlertasMovimientos />
+    <h1>Bienvenido a mi página de Astro</h1>
+    <h2>Alertas de Movimientos en Binance</h2>
+    <ul id="alerts"></ul>
   </body>
 </html>
