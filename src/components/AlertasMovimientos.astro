@@ -1,5 +1,5 @@
 ---
-import { useEffect, useState } from 'react';
+import { useState } from 'preact/hooks';
 
 const variacion = 5;
 const variacion_100 = 7;
@@ -24,7 +24,7 @@ function calcularVariacion(inicial, final) {
   return ((final - inicial) / inicial) * 100;
 }
 
-function AlertasMovimientos() {
+export default function AlertasMovimientos() {
   const [alerts, setAlerts] = useState([]);
   const [klines, setKlines] = useState({});
 
@@ -117,7 +117,4 @@ function AlertasMovimientos() {
     </div>
   );
 }
-
-export default AlertasMovimientos;
 ---
-<AlertasMovimientos />
