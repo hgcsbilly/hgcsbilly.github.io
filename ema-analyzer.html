@@ -60,6 +60,7 @@
         <input type="text" id="symbolsInput" placeholder="Símbolos separados por coma (ej. BTCUSDT,ETHUSDT,BNBUSDT)">
         <input type="number" id="ema1Input" placeholder="EMA 1 (ej. 80)">
         <input type="number" id="ema2Input" placeholder="EMA 2 (ej. 240)">
+        <input type="text" id="customIntervalInput" placeholder="Intervalo personalizado (ej. 1m, 5m, 1h)">
         <select id="intervalSelect">
             <option value="1m">1 minuto</option>
             <option value="3m">3 minutos</option>
@@ -102,9 +103,9 @@
             const symbols = symbolsInput.toUpperCase().split(',').map(s => s.trim());
             ema1Period = parseInt(document.getElementById('ema1Input').value);
             ema2Period = parseInt(document.getElementById('ema2Input').value);
-            interval = document.getElementById('intervalSelect').value;
+            interval = document.getElementById('customIntervalInput').value || document.getElementById('intervalSelect').value;
 
-            if (!symbols.length || !ema1Period || !ema2Period) {
+            if (!symbols.length || !ema1Period || !ema2Period || !interval) {
                 alert('Por favor, completa todos los campos');
                 return;
             }
@@ -140,9 +141,12 @@
             symbolsData[symbol] = {
                 prices: data.map(d => parseFloat(d[4])),
                 ema1: [],
-                ema2: []
+                ema2: [],
+                volume: data.map(d => parseFloat(d[5])),
+                rsi: []
             };
             calculateEMAs(symbol);
+            calculateRSI(symbol, 14);
         }
 
         function calculateEMAs(symbol) {
@@ -160,6 +164,35 @@
             return ema;
         }
 
+        function calculateRSI(symbol, period) {
+            const data = symbolsData[symbol];
+            let gains = 0, losses = 0;
+
+            for (let i = 1; i <= period; i++) {
+                let change = data.prices[i] - data.prices[i - 1];
+                if (change > 0) gains += change;
+                else losses -= change;
+            }
+
+            let avgGain = gains / period;
+            let avgLoss = losses / period;
+            let rs = avgGain / avgLoss;
+            data.rsi[period] = 100 - (100 / (1 + rs));
+
+            for (let i = period + 1; i < data.prices.length; i++) {
+                let change = data.prices[i] - data.prices[i - 1];
+                if (change > 0) {
+                    avgGain = (avgGain * (period - 1) + change) / period;
+                    avgLoss = (avgLoss * (period - 1)) / period;
+                } else {
+                    avgGain = (avgGain * (period - 1)) / period;
+                    avgLoss = (avgLoss * (period - 1) - change) / period;
+                }
+                rs = avgGain / avgLoss;
+                data.rsi[i] = 100 - (100 / (1 + rs));
+            }
+        }
+
         function connectWebSocket(symbol) {
             if (ws[symbol]) {
                 ws[symbol].close();
@@ -171,7 +204,8 @@
                 const data = JSON.parse(event.data);
                 if (data.e === 'kline') {
                     const price = parseFloat(data.k.c);
-                    updateSymbolData(symbol, price);
+                    const volume = parseFloat(data.k.v);
+                    updateSymbolData(symbol, price, volume);
                     checkEMACrossover(symbol);
                     if (symbol === document.getElementById('symbolSelect').value) {
                         updateChart();
@@ -179,139 +213,67 @@
                 }
             };
 
-            ws[symbol].onerror = (error) => {
-                console.error(`WebSocket Error for ${symbol}:`, error);
-                reconnectWebSocket(symbol);
-            };
-
             ws[symbol].onclose = () => {
-                console.log(`WebSocket Cerrado para ${symbol}`);
-                reconnectWebSocket(symbol);
+                setTimeout(() => connectWebSocket(symbol), 5000);
             };
         }
 
-        function reconnectWebSocket(symbol) {
-            setTimeout(() => {
-                console.log(`Intentando reconectar WebSocket para ${symbol}...`);
-                connectWebSocket(symbol);
-            }, 5000);
-        }
-
-        function updateSymbolData(symbol, price) {
+        function updateSymbolData(symbol, price, volume) {
             const data = symbolsData[symbol];
             data.prices.push(price);
-            data.ema1.push(calculateEMA(data.prices.slice(-ema1Period), ema1Period).pop());
-            data.ema2.push(calculateEMA(data.prices.slice(-ema2Period), ema2Period).pop());
-
-            if (data.prices.length > 1000) {
-                data.prices.shift();
-                data.ema1.shift();
-                data.ema2.shift();
-            }
+            data.prices.shift();
+            data.volume.push(volume);
+            data.volume.shift();
+            calculateEMAs(symbol);
+            calculateRSI(symbol, 14);
         }
 
         function checkEMACrossover(symbol) {
             const data = symbolsData[symbol];
-            if (data.ema1.length < 2 || data.ema2.length < 2) return;
-
-            const ema1Current = data.ema1[data.ema1.length - 1];
-            const ema1Previous = data.ema1[data.ema1.length - 2];
-            const ema2Current = data.ema2[data.ema2.length - 1];
-            const ema2Previous = data.ema2[data.ema2.length - 2];
-
-            if (ema1Previous <= ema2Previous && ema1Current > ema2Current) {
-                logAlert(`¡Alerta! Cruce hacia arriba en ${symbol} - Señal de LONG`);
-                addPastCross(symbol, 'LONG');
-            } else if (ema1Previous >= ema2Previous && ema1Current < ema2Current) {
-                logAlert(`¡Alerta! Cruce hacia abajo en ${symbol} - Señal de SHORT`);
-                addPastCross(symbol, 'SHORT');
+            const length = data.ema1.length;
+            if (data.ema1[length - 2] < data.ema2[length - 2] && data.ema1[length - 1] > data.ema2[length - 1]) {
+                addAlert(symbol, 'Cruzamiento alcista de EMA');
+            } else if (data.ema1[length - 2] > data.ema2[length - 2] && data.ema1[length - 1] < data.ema2[length - 1]) {
+                addAlert(symbol, 'Cruzamiento bajista de EMA');
             }
-
-            checkUpcomingCross(symbol, ema1Current, ema2Current);
         }
 
-        function logAlert(message) {
+        function addAlert(symbol, message) {
             const alertsContainer = document.getElementById('alertsContainer');
-            alertsContainer.innerHTML = `<p>${new Date().toLocaleTimeString()}: ${message}</p>` + alertsContainer.innerHTML;
-            sendNotification(message);
+            const alert = document.createElement('div');
+            alert.textContent = `${symbol}: ${message}`;
+            alertsContainer.appendChild(alert);
+
+            if (Notification.permission === 'granted') {
+                new Notification(`${symbol}: ${message}`);
+            }
+
+            saveAlert(symbol, message);
         }
 
-        function sendNotification(message) {
-            if (Notification.permission === "granted") {
-                new Notification("Alerta de EMA", { body: message });
-            } else if (Notification.permission !== "denied") {
-                Notification.requestPermission().then(permission => {
-                    if (permission === "granted") {
-                        new Notification("Alerta de EMA", { body: message });
-                    }
-                });
-            }
-        }
-
-        function checkUpcomingCross(symbol, ema1, ema2) {
-            const difference = Math.abs(ema1 - ema2);
-            const threshold = 0.001 * (ema1 + ema2) / 2;
-
-            if (difference < threshold) {
-                updateUpcomingCrosses(symbol, difference);
-            }
-        }
-
-        function updateUpcomingCrosses(symbol, difference) {
-            const container = document.getElementById('upcomingCrossesContainer');
-            const crosses = Array.from(container.children);
-            const existingIndex = crosses.findIndex(p => p.dataset.symbol === symbol);
-
-            if (existingIndex !== -1) {
-                container.removeChild(crosses[existingIndex]);
-            }
-
-            const newP = document.createElement('p');
-            newP.textContent = `${symbol}: Diferencia de ${difference.toFixed(6)}`;
-            newP.dataset.symbol = symbol;
-            newP.dataset.difference = difference;
-
-            let inserted = false;
-            for (let i = 0; i < crosses.length; i++) {
-                if (difference < parseFloat(crosses[i].dataset.difference)) {
-                    container.insertBefore(newP, crosses[i]);
-                    inserted = true;
-                    break;
-                }
-            }
-
-            if (!inserted) {
-                container.appendChild(newP);
-            }
-
-            while (container.children.length > 10) {
-                container.removeChild(container.lastChild);
-            }
-        }
-
-        function addPastCross(symbol, direction) {
-            pastCrosses.unshift({ symbol, direction, time: new Date() });
+        function saveAlert(symbol, message) {
+            const alert = { symbol, message, timestamp: new Date().toISOString() };
+            pastCrosses.unshift(alert);
             if (pastCrosses.length > 10) {
                 pastCrosses.pop();
             }
-            updatePastCrossesDisplay();
+            localStorage.setItem('pastCrosses', JSON.stringify(pastCrosses));
+            updatePastCrossesContainer();
         }
 
-        function updatePastCrossesDisplay() {
-            const container = document.getElementById('pastCrossesContainer');
-            container.innerHTML = '';
+        function updatePastCrossesContainer() {
+            const pastCrossesContainer = document.getElementById('pastCrossesContainer');
+            pastCrossesContainer.innerHTML = '';
             pastCrosses.forEach(cross => {
-                const p = document.createElement('p');
-                p.textContent = `${cross.time.toLocaleTimeString()}: ${cross.symbol} - ${cross.direction}`;
-                container.appendChild(p);
+                const div = document.createElement('div');
+                div.textContent = `${cross.symbol}: ${cross.message} - ${cross.timestamp}`;
+                pastCrossesContainer.appendChild(div);
             });
         }
 
         function updateChart() {
             const symbol = document.getElementById('symbolSelect').value;
             const data = symbolsData[symbol];
-
-            if (!data) return;
 
             if (chart) {
                 chart.destroy();
@@ -321,58 +283,53 @@
             chart = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: [...Array(data.prices.length).keys()],
+                    labels: data.prices.map((_, i) => i),
                     datasets: [
                         {
                             label: 'Precio',
                             data: data.prices,
-                            borderColor: 'rgb(75, 192, 192)',
-                            tension: 0.1
+                            borderColor: 'blue',
+                            borderWidth: 1,
+                            fill: false
                         },
                         {
                             label: `EMA ${ema1Period}`,
                             data: data.ema1,
-                            borderColor: 'rgb(255, 99, 132)',
-                            tension: 0.1
+                            borderColor: 'green',
+                            borderWidth: 1,
+                            fill: false
                         },
                         {
                             label: `EMA ${ema2Period}`,
                             data: data.ema2,
-                            borderColor: 'rgb(54, 162, 235)',
-                            tension: 0.1
+                            borderColor: 'red',
+                            borderWidth: 1,
+                            fill: false
                         }
                     ]
                 },
                 options: {
-                    responsive: true,
-                    title: {
-                        display: true,
-                        text: symbol
-                    },
                     scales: {
-                        x: {
-                            display: true,
-                            title: {
-                                display: true,
-                                text: 'Tiempo'
-                            }
-                        },
-                        y: {
-                            display: true,
-                            title: {
-                                display: true,
-                                text: 'Precio'
-                            }
-                        }
+                        x: { display: false },
+                        y: { beginAtZero: false }
                     }
                 }
             });
         }
 
-        // Solicitar permiso para notificaciones al cargar la página
-        if (Notification.permission !== "granted" && Notification.permission !== "denied") {
-            Notification.requestPermission();
+        function initialize() {
+            if ('Notification' in window) {
+                Notification.requestPermission();
+            }
+
+            const storedCrosses = localStorage.getItem('pastCrosses');
+            if (storedCrosses) {
+                pastCrosses = JSON.parse(storedCrosses);
+                updatePastCrossesContainer();
+            }
         }
+
+        window.onload = initialize;
     </script>
 </body>
 </html>
