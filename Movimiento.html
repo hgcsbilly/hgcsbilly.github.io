@@ -1,0 +1,277 @@
+<html><head><base href="https://cryptotools.xyz" />
+<title>CryptoTools XYZ - Herramienta de Movimiento con WebSocket</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+    color: #e0e0e0;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #121212;
+  }
+  header {
+    background-color: #1e1e1e;
+    color: #bb86fc;
+    text-align: center;
+    padding: 1em;
+    border-radius: 5px;
+  }
+  h1, h2 { margin: 0; }
+  nav {
+    background-color: #2d2d2d;
+    padding: 0.5em;
+    border-radius: 5px;
+    margin-top: 10px;
+  }
+  nav ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    justify-content: space-around;
+  }
+  nav ul li a {
+    color: #bb86fc;
+    text-decoration: none;
+    padding: 0.5em 1em;
+  }
+  nav ul li a:hover {
+    background-color: #3d3d3d;
+    border-radius: 3px;
+  }
+  .tool-section {
+    background-color: #1e1e1e;
+    margin: 20px 0;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  }
+  h2 {
+    color: #03dac6;
+    border-bottom: 2px solid #03dac6;
+    padding-bottom: 10px;
+  }
+  #movement-tool {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  #control-panel, #results {
+    background-color: #2d2d2d;
+    padding: 15px;
+    border-radius: 5px;
+  }
+  #control-panel {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: space-between;
+    align-items: center;
+  }
+  input, select, button {
+    padding: 10px;
+    border: 1px solid #3d3d3d;
+    border-radius: 4px;
+    font-size: 16px;
+    background-color: #2d2d2d;
+    color: #e0e0e0;
+  }
+  button {
+    background-color: #bb86fc;
+    color: #121212;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  button:hover {
+    background-color: #a370f7;
+  }
+  #results {
+    height: 400px;
+    overflow-y: auto;
+    font-family: monospace;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+  .status {
+    font-style: italic;
+    color: #03dac6;
+  }
+</style>
+</head>
+<body>
+  <header>
+    <h1>CryptoTools XYZ</h1>
+  </header>
+  
+  <nav>
+    <ul>
+      <li><a href="#movement">Movimiento</a></li>
+      <li><a href="#converter">Conversor</a></li>
+      <li><a href="#portfolio">Portafolio</a></li>
+      <li><a href="#calculator">Calculadora</a></li>
+      <li><a href="#scripts">Scripts</a></li>
+    </ul>
+  </nav>
+
+  <main>
+    <section id="movement" class="tool-section">
+      <h2>Herramienta de Movimiento (WebSocket)</h2>
+      <div id="movement-tool">
+        <div id="control-panel">
+          <div>
+            <label for="variation">Variación (%): </label>
+            <input type="number" id="variation" value="5" min="0" max="100" step="0.1">
+          </div>
+          <div>
+            <label for="variation-100">Variación 100k (%): </label>
+            <input type="number" id="variation-100" value="7" min="0" max="100" step="0.1">
+          </div>
+          <div>
+            <label for="variation-fast">Variación rápida (%): </label>
+            <input type="number" id="variation-fast" value="2" min="0" max="100" step="0.1">
+          </div>
+          <button id="start-button">Iniciar Escaneo</button>
+        </div>
+        <div id="results"></div>
+      </div>
+    </section>
+
+    <!-- Otras secciones (conversor, portafolio, calculadora, scripts) aquí -->
+
+  </main>
+
+  <script>
+    const resultsDiv = document.getElementById('results');
+    const startButton = document.getElementById('start-button');
+    let isRunning = false;
+    let webSocket;
+    let tickerData = {};
+    let klineData = {};
+
+    function appendResult(text) {
+      resultsDiv.innerHTML += text + '\n';
+      resultsDiv.scrollTop = resultsDiv.scrollHeight;
+    }
+
+    function humanFormat(volume) {
+      const units = ['', 'K', 'M', 'B', 'T', 'P'];
+      let unitIndex = 0;
+      while (Math.abs(volume) >= 1000 && unitIndex < units.length - 1) {
+        volume /= 1000;
+        unitIndex++;
+      }
+      return volume.toFixed(2) + units[unitIndex];
+    }
+
+    function checkMovement(symbol) {
+      const variation = parseFloat(document.getElementById('variation').value);
+      const variation100 = parseFloat(document.getElementById('variation-100').value);
+      const variationFast = parseFloat(document.getElementById('variation-fast').value);
+
+      const ticker = tickerData[symbol];
+      const klines = klineData[symbol];
+
+      if (!ticker || !klines || klines.length < 30) return;
+
+      const initialPrice = parseFloat(klines[0][4]);
+      const currentPrice = parseFloat(klines[klines.length - 1][4]);
+      const priceChange = ((currentPrice - initialPrice) / initialPrice) * 100;
+
+      const volume = parseFloat(ticker.v);
+      const highPrice = ticker.h;
+      const lowPrice = ticker.l;
+
+      if (Math.abs(priceChange) >= variation && (volume > 100000000 || Math.abs(priceChange) >= variation100)) {
+        const direction = priceChange > 0 ? 'SHORT' : 'LONG';
+        appendResult(`${direction}: ${symbol}`);
+        appendResult(`Variación: ${Math.abs(priceChange).toFixed(2)}%`);
+        appendResult(`Volumen: ${humanFormat(volume)}`);
+        appendResult(`Precio max: ${highPrice}`);
+        appendResult(`Precio min: ${lowPrice}`);
+        appendResult('');
+      }
+
+      // Check for fast movement
+      const fastInitialPrice = parseFloat(klines[klines.length - 3][4]);
+      const fastPriceChange = ((currentPrice - fastInitialPrice) / fastInitialPrice) * 100;
+
+      if (fastPriceChange >= variationFast) {
+        appendResult(`FAST SHORT!: ${symbol}`);
+        appendResult(`Variación: ${fastPriceChange.toFixed(2)}%`);
+        appendResult(`Volumen: ${humanFormat(volume)}`);
+        appendResult(`Precio max: ${highPrice}`);
+        appendResult(`Precio min: ${lowPrice}`);
+        appendResult('');
+      }
+    }
+
+    function handleWebSocketMessage(event) {
+      const data = JSON.parse(event.data);
+
+      if (data.e === '24hrTicker') {
+        tickerData[data.s] = data;
+        checkMovement(data.s);
+      } else if (data.e === 'kline') {
+        if (!klineData[data.s]) {
+          klineData[data.s] = [];
+        }
+        klineData[data.s].push(data.k);
+        if (klineData[data.s].length > 30) {
+          klineData[data.s].shift();
+        }
+        checkMovement(data.s);
+      }
+    }
+
+    function startWebSocket() {
+      webSocket = new WebSocket('wss://fstream.binance.com/ws');
+
+      webSocket.onopen = function() {
+        appendResult('WebSocket conectado. Iniciando escaneo...');
+        const subscribeMessage = {
+          method: 'SUBSCRIBE',
+          params: [
+            '!ticker@arr',
+            '!miniTicker@arr@1000ms'
+          ],
+          id: 1
+        };
+        webSocket.send(JSON.stringify(subscribeMessage));
+      };
+
+      webSocket.onmessage = handleWebSocketMessage;
+
+      webSocket.onerror = function(error) {
+        appendResult('Error en WebSocket: ' + error.message);
+      };
+
+      webSocket.onclose = function() {
+        appendResult('WebSocket desconectado.');
+        if (isRunning) {
+          appendResult('Intentando reconectar...');
+          setTimeout(startWebSocket, 5000);
+        }
+      };
+    }
+
+    startButton.addEventListener('click', () => {
+      if (isRunning) {
+        isRunning = false;
+        startButton.textContent = 'Iniciar Escaneo';
+        appendResult('Escaneo detenido.');
+        if (webSocket) {
+          webSocket.close();
+        }
+      } else {
+        isRunning = true;
+        startButton.textContent = 'Detener Escaneo';
+        tickerData = {};
+        klineData = {};
+        startWebSocket();
+      }
+    });
+  </script>
+</body>
+</html>
