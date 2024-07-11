@@ -1,31 +1,46 @@
-// server.js
-const express = require('express');
-const { default: axios } = require('axios');
-const app = express();
-const port = 3000;
-
-app.get('/api/tickers', async (req, res) => {
+async function fetchTickers() {
     try {
-        const response = await axios.get('https://api.binance.com/api/v3/ticker/price');
-        const tickers = response.data.filter(ticker => ticker.symbol.endsWith('USDT'));
-        res.json(tickers);
+        const response = await fetch('https://api.binance.com/api/v3/ticker/price');
+        const tickers = await response.json();
+        return tickers.filter(ticker => ticker.symbol.endsWith('USDT')).map(ticker => ticker.symbol);
     } catch (error) {
-        console.error(error);
-        res.status(500).send('Error al obtener tickers');
+        console.error('Error al obtener tickers:', error);
     }
-});
+}
 
-app.get('/api/klines', async (req, res) => {
-    const { symbol } = req.query;
+async function fetchKlines(ticker) {
     try {
-        const response = await axios.get(`https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=15m&limit=1`);
-        res.json(response.data);
+        const response = await fetch(`https://api.binance.com/api/v3/klines?symbol=${ticker}&interval=15m&limit=1`);
+        const klines = await response.json();
+        return klines;
     } catch (error) {
-        console.error(error);
-        res.status(500).send('Error al obtener klines');
+        console.error(`Error al obtener klines para ${ticker}:`, error);
     }
-});
+}
 
-app.listen(port, () => {
-    console.log(`Server running at http://localhost:${port}/`);
-});
+async function analyzeTickers() {
+    const tickers = await fetchTickers();
+    const results = [];
+
+    for (const ticker of tickers) {
+        const klines = await fetchKlines(ticker);
+        if (klines && klines.length > 0) {
+            const oldClose = parseFloat(klines[0][1]);
+            const newClose = parseFloat(klines[0][4]);
+            const percentage = ((newClose - oldClose) / oldClose * 100).toFixed(2);
+            results.push({ ticker, oldClose, newClose, percentage });
+        }
+    }
+
+    return results.sort((a, b) => b.percentage - a.percentage);
+}
+
+async function displayResults() {
+    const results = await analyzeTickers();
+    const resultsDiv = document.getElementById('results');
+    resultsDiv.innerHTML = results.map(result => `
+        <p>TICK: ${result.ticker} OLD: ${result.oldClose} NEW: ${result.newClose} PORCENTAJE: ${result.percentage}%</p>
+    `).join('');
+}
+
+document.addEventListener('DOMContentLoaded', displayResults);
