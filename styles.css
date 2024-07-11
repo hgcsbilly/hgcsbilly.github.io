@@ -5,6 +5,8 @@
     --header-text: #fff;
     --table-bg: #f4f4f4;
     --table-border: #ddd;
+    --progress-bg: #ddd;
+    --progress-bar-bg: #4caf50;
 }
 
 [data-theme="dark"] {
@@ -14,6 +16,8 @@
     --header-text: #fff;
     --table-bg: #333;
     --table-border: #444;
+    --progress-bg: #444;
+    --progress-bar-bg: #4caf50;
 }
 
 body {
@@ -64,17 +68,15 @@ section {
     background-color: var(--table-bg);
 }
 
-table {
+#progress-container {
+    margin-top: 1em;
     width: 100%;
-    border-collapse: collapse;
+    background-color: var(--progress-bg);
 }
 
-th, td {
-    padding: 10px;
-    border: 1px solid var(--table-border);
-    text-align: left;
-}
-
-th {
-    cursor: pointer;
+#progress-bar {
+    display: none;
+    width: 0%;
+    height: 20px;
+    background-color: var(--progress-bar-bg);
 }

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scripts - Tu Sitio Web</title>
+    <title>Temporalidad - Tu Sitio Web</title>
     <link rel="stylesheet" href="styles.css">
     <script defer src="Temporalidad.js"></script>
 </head>
@@ -13,16 +13,33 @@
         <nav>
             <ul>
                 <li><a href="index.html">Inicio</a></li>
-                <li><a href="about.html">Sobre mí</a></li>
-                <li><a href="scripts.html">Scripts</a></li>
-                <li><a href="contact.html">Contacto</a></li>
             </ul>
         </nav>
+        <button id="toggle-theme">Modo Oscuro</button>
     </header>
 
     <section id="scripts">
-        <h2>Scripts</h2>
+        <h2>Temporalidad</h2>
+
+        <label for="interval">Selecciona el intervalo:</label>
+        <select id="interval">
+            <option value="1m">1 minuto</option>
+            <option value="3m">3 minutos</option>
+            <option value="5m">5 minutos</option>
+            <option value="15m" selected>15 minutos</option>
+            <option value="30m">30 minutos</option>
+            <option value="1h">1 hora</option>
+            <option value="2h">2 horas</option>
+            <option value="4h">4 horas</option>
+            <option value="1d">1 día</option>
+        </select>
+
+        <p id="coin-count">Number of analyzed coins: 0</p>
         <div id="results"></div>
+
+        <div id="progress-container">
+            <div id="progress-bar"></div>
+        </div>
     </section>
 </body>
 </html>
